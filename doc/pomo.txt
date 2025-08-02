@@ -1,0 +1,328 @@
+*pomo.txt*                  For Neovim >= 0.8.0          Last change: 2025 August 02
+
+==============================================================================
+Table of Contents                                           *pomo-table-of-contents*
+
+1. Introduction                                               |pomo-introduction|
+2. Installation                                               |pomo-installation|
+3. Configuration                                             |pomo-configuration|
+4. Commands                                                     |pomo-commands|
+5. API Reference                                             |pomo-api-reference|
+6. Examples                                                     |pomo-examples|
+7. Troubleshooting                                         |pomo-troubleshooting|
+
+==============================================================================
+1. Introduction                                               *pomo-introduction*
+
+Pomo.nvim is a Pomodoro Technique timer plugin for Neovim. It helps you manage
+your work sessions using the popular productivity method developed by 
+Francesco Cirillo in the late 1980s.
+
+Features:
+- 🍅 Infinite cycling between work sessions and breaks
+- ✨ Prominent centered popup notifications with persistent break notices
+- 📊 Session cycle tracking and status monitoring
+- ⚡ Interactive break popups with escape-to-stop functionality
+- 🎯 Simple API for integration with statuslines
+- 🧪 Fully tested with comprehensive test coverage
+
+The Pomodoro Technique workflow in pomo.nvim:
+1. Start a timer with `:PomoStart` for your configured session duration
+2. Work focused during the session (traditionally 25 minutes)
+3. When the session ends, a persistent popup appears notifying you to take a break
+4. The break popup stays visible until the break time is over or you press <Esc>
+5. If you press <Esc> during the break, the entire timer stops
+6. Otherwise, after the break, a new session automatically starts
+7. This cycle continues infinitely until you manually stop with `:PomoStop`
+
+==============================================================================
+2. Installation                                               *pomo-installation*
+
+Using lazy.nvim: >
+    {
+      "yourusername/pomo.nvim",
+      config = function()
+        require("pomo").setup({
+          session_minutes = 25,  -- Work session duration
+          break_minutes = 5,     -- Break duration
+        })
+      end,
+    }
+
+Using packer.nvim: >
+    use {
+      "yourusername/pomo.nvim",
+      config = function()
+        require("pomo").setup()
+      end
+    }
+
+Using vim-plug: >
+    Plug 'yourusername/pomo.nvim'
+
+Then in your init.lua or init.vim: >
+    lua require("pomo").setup()
+
+==============================================================================
+3. Configuration                                             *pomo-configuration*
+
+Pomo.nvim can be configured with the following options:
+
+                                                              *pomo.setup()*
+setup({config})
+    Configure the plugin with custom settings.
+
+    Parameters: ~
+        {config} (table) Configuration options
+
+    Options: ~
+        session_minutes (number): Duration of work sessions in minutes
+                                 Default: 25
+        break_minutes   (number): Duration of breaks in minutes
+                                 Default: 5
+
+    Example: >
+        require("pomo").setup({
+          session_minutes = 30,  -- 30-minute work sessions
+          break_minutes = 10,    -- 10-minute breaks
+        })
+
+==============================================================================
+4. Commands                                                     *pomo-commands*
+
+Pomo.nvim provides the following commands for managing your Pomodoro sessions:
+
+                                                                  *:PomoStart*
+:PomoStart
+    Start a new Pomodoro session cycle with the configured duration.
+    The timer will continue cycling between sessions and breaks infinitely
+    until stopped. If a timer is already running, displays a warning message.
+
+                                                                   *:PomoStop*
+:PomoStop
+    Stop the current Pomodoro session or break cycle completely.
+    This ends the infinite cycling and resets the cycle counter.
+    Useful for interruptions or when you're done working.
+
+                                                                  *:PomoReset*
+:PomoReset
+    Reset the timer to its initial state.
+    Stops any running timers, closes break popups, and clears all session state
+    including the cycle counter.
+
+                                                                 *:PomoStatus*
+:PomoStatus
+    Display the current status of the Pomodoro timer.
+    Shows whether you're in a work session, break, or if the timer is stopped,
+    along with remaining time and current session/cycle information.
+
+Note: These commands are automatically created when you call |pomo.setup()|.
+
+==============================================================================
+5. API Reference                                             *pomo-api-reference*
+
+                                                                  *pomo.start()*
+pomo.start()
+    Start a new infinite Pomodoro session cycle.
+    
+    Returns: ~
+        nil
+
+    Example: >
+        require("pomo").start()
+
+                                                                   *pomo.stop()*
+pomo.stop()
+    Stop the current session cycle completely.
+    
+    Returns: ~
+        nil
+
+    Example: >
+        require("pomo").stop()
+
+                                                                  *pomo.reset()*
+pomo.reset()
+    Reset the timer to initial state, clearing all progress.
+    
+    Returns: ~
+        nil
+
+    Example: >
+        require("pomo").reset()
+
+                                                                 *pomo.status()*
+pomo.status()
+    Get the current timer status and cycle information.
+    
+    Returns: ~
+        string: "stopped", "running", or "break"
+        number: remaining time in seconds (when "running") or cycle count
+        number: current cycle count (when "running")
+
+    Example: >
+        local status, remaining, cycles = require("pomo").status()
+        if status == "running" then
+          print("Session " .. (cycles + 1) .. " - Time remaining: " .. remaining .. " seconds")
+        elseif status == "break" then
+          print("On break after " .. remaining .. " completed session(s)")
+        else
+          print("Timer stopped after " .. remaining .. " session(s)")
+        end
+
+==============================================================================
+6. Examples                                                     *pomo-examples*
+
+BASIC USAGE ~
+
+Start an infinite Pomodoro cycle: >
+    :PomoStart
+
+Stop the entire cycle: >
+    :PomoStop
+
+Check current status and progress: >
+    :PomoStatus
+
+BREAK BEHAVIOR ~
+
+During a break, you'll see a persistent popup like:
+>
+    ╭──────────────────────────────────────────────────╮
+    │                                                  │
+    │                 Pomodoro Timer                   │
+    │     🍅 Session 3 complete!                       │
+    │     Take a 5 minute break                        │
+    │                                                  │
+    │           Press <Esc> to stop timer              │
+    ╰──────────────────────────────────────────────────╯
+
+- The popup stays visible until the break time expires
+- Press <Esc> to stop the entire timer cycle
+- If you don't press <Esc>, the next session starts automatically
+
+STATUSLINE INTEGRATION ~
+
+For a statusline that shows current session and progress: >
+    local function pomo_status()
+      local pomo = require("pomo")
+      local status, remaining, cycles = pomo.status()
+      
+      if status == "running" then
+        local minutes = math.floor(remaining / 60)
+        local seconds = remaining % 60
+        local session_num = cycles + 1
+        return string.format("🍅 S%d %02d:%02d", session_num, minutes, seconds)
+      elseif status == "break" then
+        return string.format("☕ Break (after %d sessions)", cycles)
+      else
+        return cycles > 0 and string.format("✅ %d sessions completed", cycles) or ""
+      end
+    end
+
+CUSTOM KEYBINDINGS ~
+
+Set up convenient keybindings: >
+    vim.keymap.set("n", "<leader>ps", function()
+      require("pomo").start()
+    end, { desc = "Start Pomodoro cycle" })
+    
+    vim.keymap.set("n", "<leader>pt", function()
+      require("pomo").stop()
+    end, { desc = "Stop Pomodoro cycle" })
+    
+    vim.keymap.set("n", "<leader>pr", function()
+      require("pomo").reset()
+    end, { desc = "Reset Pomodoro" })
+    
+    vim.keymap.set("n", "<leader>pi", function()
+      require("pomo").status()
+    end, { desc = "Pomodoro status" })
+
+AUTOMATION WITH AUTOCMDS ~
+
+Automatically adjust environment during sessions: >
+    -- Create autocommand group for Pomodoro events
+    local pomo_group = vim.api.nvim_create_augroup("PomoEvents", { clear = true })
+    
+    -- Auto-start focus mode when session begins
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "PomoSessionStart",
+      group = pomo_group,
+      callback = function()
+        vim.opt.spell = false
+        vim.cmd("silent! NoNeckPain")  -- Enable focus mode
+      end,
+    })
+    
+    -- Remind to save work during breaks
+    vim.api.nvim_create_autocmd("User", {
+      pattern = "PomoBreakStart", 
+      group = pomo_group,
+      callback = function()
+        vim.cmd("silent! wall")  -- Save all files
+      end,
+    })
+
+TRACKING PRODUCTIVITY ~
+
+Log your completed sessions: >
+    local function log_session()
+      local status, cycles = require("pomo").status()
+      if cycles > 0 then
+        local log_file = vim.fn.expand("~/pomodoro_log.txt")
+        local timestamp = os.date("%Y-%m-%d %H:%M")
+        local entry = timestamp .. " - Completed " .. cycles .. " sessions\n"
+        vim.fn.writefile({entry}, log_file, "a")
+      end
+    end
+    
+    -- Log sessions when stopping timer
+    vim.keymap.set("n", "<leader>pt", function()
+      log_session()
+      require("pomo").stop()
+    end, { desc = "Stop and log Pomodoro sessions" })
+
+==============================================================================
+7. Troubleshooting                                         *pomo-troubleshooting*
+
+POPUPS NOT APPEARING ~
+
+If popup notifications are not showing:
+- Ensure you're running Neovim >= 0.8.0
+- Check that no other plugins are interfering with popup windows
+- In headless or test environments, the plugin falls back to vim.notify
+
+BREAK POPUP NOT DISMISSING ~
+
+If the break popup doesn't respond to <Esc>:
+- Ensure the popup window has focus (it should grab focus automatically)
+- Try clicking on the popup first, then pressing <Esc>
+- Check for conflicting keymaps with `:verbose map <Esc>`
+
+TIMER NOT CYCLING ~
+
+If the timer stops after one session instead of cycling:
+- Verify you're using the updated version with infinite cycling
+- Check for Lua errors with `:messages`
+- Ensure no other code is calling `timer:reset()` unintentionally
+
+PERFORMANCE ISSUES ~
+
+If you experience performance problems:
+- The plugin uses minimal resources and should not impact performance
+- Check for conflicts with other timer or notification plugins
+- Monitor with `:lua print(vim.inspect(require("pomo").timer.state))`
+
+INCORRECT CYCLE COUNTING ~
+
+If session counting seems wrong:
+- Cycle count increments when entering a break (completing a session)
+- Reset with `:PomoReset` to clear counters
+- Status shows current progress: running=current session, break=completed sessions
+
+==============================================================================
+
+Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
+
+vim:tw=78:ts=8:noet:ft=help:norl:
