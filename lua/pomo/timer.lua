@@ -154,7 +154,8 @@ function Timer:reset()
   self.state.in_break = false
   self.state.cycle_count = 0
 
-  popup.show("Timer reset", "Pomodoro Timer", "info")end
+  popup.show("Timer reset", "Pomodoro Timer", "info")
+end
 
 -- Get current status
 function Timer:status()
