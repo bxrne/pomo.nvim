@@ -40,7 +40,7 @@ The Pomodoro Technique workflow in pomo.nvim:
 
 Using lazy.nvim: >
     {
-      "yourusername/pomo.nvim",
+      "github.com/bxrne/pomo.nvim",
       config = function()
         require("pomo").setup({
           session_minutes = 25,  -- Work session duration
@@ -48,17 +48,6 @@ Using lazy.nvim: >
         })
       end,
     }
-
-Using packer.nvim: >
-    use {
-      "yourusername/pomo.nvim",
-      config = function()
-        require("pomo").setup()
-      end
-    }
-
-Using vim-plug: >
-    Plug 'yourusername/pomo.nvim'
 
 Then in your init.lua or init.vim: >
     lua require("pomo").setup()
